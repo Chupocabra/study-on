@@ -1,30 +1,32 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Курсы/{{ course.name }}{% endblock %}
+{% block title %}{{ course.name }}/Курсы{% endblock %}
 
 {% block body %}
+    <a class="btn btn-light" href="{{ path('app_course_index') }}">
+        <svg style="height: auto; width: 15px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+            <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
+        </svg>
+        Вернуться к списку</a>
     <h1>{{ course.name }}</h1>
 
-    <table class="table">
-        <tbody>
-        <tr>
-            <th>Описание</th>
-            <td>{{ course.description }}</td>
-        </tr>
-        </tbody>
-    </table>
+    <div class="fs-3">
+        Описание
+    </div>
+    <div class="fs-4">
+        {{ course.description }}
+    </div>
     <ul>
         {% for lesson in course.lessons|sort((a,b) => a.number <=> b.number) %}
             <li><a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.number ~ ') ' ~ lesson.name }}</li>
         {% endfor %}
     </ul>
-    <a href="{{ path('app_lesson_new', {'id': course.id}) }}">Добавить урок</a>
 
-    <div>
-        <a href="{{ path('app_course_index') }}">Вернуться к списку</a>
-        <a href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать</a>
+    <div class="d-flex me-2">
+        <a class="btn btn-outline-primary me-2" href="{{ path('app_lesson_new', {'id': course.id}) }}">Добавить урок</a>
+        <a class="btn btn-outline-dark me-2" href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать</a>
+        {{ include('course/_delete_form.html.twig') }}
     </div>
 
 
-    {{ include('course/_delete_form.html.twig') }}
 {% endblock %}

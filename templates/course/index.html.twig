@@ -5,26 +5,33 @@
 {% block body %}
     <h1>Курсы</h1>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Название</th>
-                <th>Описание</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for course in courses %}
-            <tr>
-                <td><a href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }} </a></td>
-                <td>{{ course.description }}</td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="5">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <br>
-    <a href="{{ path('app_course_new') }}">Добавить новый курс</a>
+    <div class="container">
+        <div class="row ">
+            {% for course in courses %}
+                <div class="col-6 mb-2 course-card">
+                    <div class="fs-4"><a href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }} </a>
+                    </div>
+                    <div>{{ course.description }}</div>
+                </div>
+            {% else %}
+
+                <div>
+                    <div>Курсов не найдено</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="d-flex justify-content-center">
+        <a class="btn btn-outline-primary " href="{{ path('app_course_new') }}">Добавить новый курс</a>
+    </div>
+    <style>
+        .course-card {
+            padding: 1px;
+
+        }
+
+        .course-card:hover {
+            border: 2px solid cornflowerblue;
+        }
+    </style>
 {% endblock %}

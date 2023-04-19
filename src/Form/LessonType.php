@@ -6,6 +6,7 @@ use App\Entity\Lesson;
 use App\Form\DataTransformer\CourseToStringTransformer;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -25,6 +26,23 @@ class LessonType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('number', NumberType::class, [
+                'label' => 'Порядковый номер',
+                'constraints' => [
+                    new NotBlank(null, 'Порядковый номер урока не может быть пустым'),
+                    new Range(
+                        null,
+                        'Значение поля должно быть от {{ min }} до {{ max }}',
+                        null,
+                        null,
+                        null,
+                        null,
+                        1,
+                        null,
+                        10000
+                    ),
+                ]
+            ])
             ->add('name', TextType::class, [
                 'label' => 'Название',
                 'constraints' => [
@@ -45,23 +63,6 @@ class LessonType extends AbstractType
                 'label' => 'Действия',
                 'constraints' => [
                     new NotBlank(null, 'Название не может быть пустым'),
-                ]
-            ])
-            ->add('number', TextType::class, [
-                'label' => 'Порядковый номер',
-                'constraints' => [
-                    new NotBlank(null, 'Порядковый номер урока не может быть пустым'),
-                    new Range(
-                        null,
-                        'Значение поля должно быть от {{ min }} до {{ max }}',
-                        null,
-                        null,
-                        null,
-                        null,
-                        1,
-                        null,
-                        10000
-                    ),
                 ]
             ])
             ->add('course', HiddenType::class);

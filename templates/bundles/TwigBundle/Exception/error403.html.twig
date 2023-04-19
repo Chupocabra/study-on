@@ -1,0 +1,18 @@
+{# templates/bundles/TwigBundle/Exception/error404.html.twig #}
+{% extends 'base.html.twig' %}
+{% block title %} Отказано в доступе {% endblock %}
+{% block body %}
+    <h1>Отказано в доступе</h1>
+    <div class="d-flex align-items-center justify-content-center">
+        <div class="text-center">
+            <h2>{{ status_code }}</h2>
+            <h2>{{ status_text }}</h2>
+            <p>
+                Извините, но вам запрещен доступ на данную страницу сайта.
+                <a class="link-info" onclick="history.back()">Вернуться на предыдущую страницу</a>
+            </p>
+            <a href="{{ path('app_course_index') }}">Вернуться к курсам</a>.
+        </div>
+    </div>
+{% endblock %}
+
