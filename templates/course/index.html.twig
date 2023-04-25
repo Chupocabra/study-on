@@ -9,7 +9,7 @@
         <div class="row ">
             {% for course in courses %}
                 <div class="col-6 mb-2 course-card">
-                    <div class="fs-4"><a href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }} </a>
+                    <div class="fs-4"><a class="app_course_show" href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }} </a>
                     </div>
                     <div>{{ course.description }}</div>
                 </div>

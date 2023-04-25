@@ -66,7 +66,7 @@ class LessonType extends AbstractType
                 'label' => 'Действия',
                 'required' => true,
                 'constraints' => [
-                    new NotBlank(null, 'Название не может быть пустым'),
+                    new NotBlank(null, 'Поле не может быть пустым'),
                 ]
             ])
             ->add('course', HiddenType::class);
