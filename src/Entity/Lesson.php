@@ -34,7 +34,7 @@ class Lesson
     private ?string $description = null;
 
     /**
-     * @ORM\Column(type="smallint", nullable=true, length="10000")
+     * @ORM\Column(type="smallint", nullable=true)
      */
     private ?int $number = null;
 

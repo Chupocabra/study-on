@@ -20,38 +20,41 @@ class CourseType extends AbstractType
         $builder
             ->add('code', TextType::class, [
                 'label' => 'Символьный код',
+                'required' => true,
                 'constraints' => [
                     new NotBlank(null, 'Символьный код не может быть пустым'),
                     new Length(
                         null,
-                        0,
+                        3,
                         255,
                         null,
                         null,
                         null,
-                        null,
+                        'Симввольный код должен быть не менее 3 символов',
                         'Символьный код должен быть не более 255 символов'
                     ),
                 ]
             ])
             ->add('name', TextType::class, [
                 'label' => 'Название',
+                'required' => true,
                 'constraints' => [
                     new NotBlank(null, 'Название не может быть пустым'),
                     new Length(
                         null,
-                        0,
+                        3,
                         255,
                         null,
                         null,
                         null,
-                        null,
+                        'Название должно быть не менее 3 символов',
                         'Название должно быть не более 255 символов'
                     )
                 ]
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Описание',
+                'required' => false,
                 'constraints' => [
                     new Length(
                         null,

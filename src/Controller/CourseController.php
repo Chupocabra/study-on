@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class CourseController extends AbstractController
 {
     /**
-     * @Route("/", name="app_course_index", methods={"GET"})
+     * @Route("", name="app_course_index", methods={"GET"})
      */
     public function index(CourseRepository $courseRepository): Response
     {
@@ -84,7 +84,7 @@ class CourseController extends AbstractController
      */
     public function delete(Request $request, Course $course, CourseRepository $courseRepository): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$course->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $course->getId(), $request->request->get('_token'))) {
             $courseRepository->remove($course, true);
         }
 
@@ -106,7 +106,7 @@ class CourseController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $lessonRepository->add($lesson, true);
 
-            return $this->redirectToRoute('app_course_show', ['id'=>$course->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_course_show', ['id' => $course->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->renderForm('lesson/new.html.twig', [

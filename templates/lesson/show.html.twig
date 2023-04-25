@@ -9,7 +9,7 @@
         </svg>
         Вернуться к курсу</a>
     <h1>{{ lesson.name }}</h1>
-    <h2>из курса <a href="{{ path('app_course_show', {'id' : lesson.course.id}) }}">{{ lesson.course.name }}</a></h2>
+    <h2>из курса <a class="course-name" href="{{ path('app_course_show', {'id' : lesson.course.id}) }}">{{ lesson.course.name }}</a></h2>
     <table class="table">
         <tbody>
         <tr>

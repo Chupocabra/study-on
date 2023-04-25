@@ -7,6 +7,7 @@ use App\Form\DataTransformer\CourseToStringTransformer;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -28,6 +29,7 @@ class LessonType extends AbstractType
         $builder
             ->add('number', NumberType::class, [
                 'label' => 'Порядковый номер',
+                'required' => true,
                 'constraints' => [
                     new NotBlank(null, 'Порядковый номер урока не может быть пустым'),
                     new Range(
@@ -45,22 +47,24 @@ class LessonType extends AbstractType
             ])
             ->add('name', TextType::class, [
                 'label' => 'Название',
+                'required' => true,
                 'constraints' => [
                     new NotBlank(null, 'Название не может быть пустым'),
                     new Length(
                         null,
-                        0,
+                        3,
                         255,
                         null,
                         null,
                         null,
-                        null,
+                        'Название должно содержать более 3 символов',
                         'Название должно быть не более 255 символов'
                     ),
                 ]
             ])
-            ->add('description', TextType::class, [
+            ->add('description', TextareaType::class, [
                 'label' => 'Действия',
+                'required' => true,
                 'constraints' => [
                     new NotBlank(null, 'Название не может быть пустым'),
                 ]

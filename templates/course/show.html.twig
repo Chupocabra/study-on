@@ -16,9 +16,9 @@
     <div class="fs-4">
         {{ course.description }}
     </div>
-    <ul>
+    <ul class="list-group">
         {% for lesson in course.lessons|sort((a,b) => a.number <=> b.number) %}
-            <li><a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.number ~ ') ' ~ lesson.name }}</li>
+            <li class="list-group-item"><a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.number ~ ') ' ~ lesson.name }}</li>
         {% endfor %}
     </ul>
 
