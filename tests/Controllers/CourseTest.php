@@ -118,8 +118,8 @@ class CourseTest extends AbstractTest
         yield ['/courses/-1/edit'];
     }
 
-    // Проверка создания курса
-    public function testCourseCreation(): void
+    // Проверка формы с пустым кодом
+    public function testEmptyCode(): void
     {
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
@@ -140,6 +140,19 @@ class CourseTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Символьный код не может быть пустым'
         );
+    }
+
+    // Проверка формы с неуникальным кодом
+    public function testNotUniqueCode(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+        $countCourseBeforeAdding = count(self::getEntityManager()->getRepository(Course::class)->findAll());
+
+        // Перейти в форму добавления
+        $link = $crawler->selectLink('Добавить новый курс')->link();
+        $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с неуникальным кодом
         $client->submitForm('Сохранить', [
@@ -151,7 +164,19 @@ class CourseTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Код не уникален'
         );
+    }
 
+    // Проверка формы с длинным кодом
+    public function testLongCode(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+        $countCourseBeforeAdding = count(self::getEntityManager()->getRepository(Course::class)->findAll());
+
+        // Перейти в форму добавления
+        $link = $crawler->selectLink('Добавить новый курс')->link();
+        $client->click($link);
+        $this->assertResponseOk();
         // Форма с длинным кодом
         $name = '1234567890';
         $client->submitForm('Сохранить', [
@@ -163,6 +188,19 @@ class CourseTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Символьный код должен быть не более 255 символов'
         );
+    }
+
+    // Проверка формы с коротким именем
+    public function testShortName(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+        $countCourseBeforeAdding = count(self::getEntityManager()->getRepository(Course::class)->findAll());
+
+        // Перейти в форму добавления
+        $link = $crawler->selectLink('Добавить новый курс')->link();
+        $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с коротким именем
         $client->submitForm('Сохранить', [
@@ -174,6 +212,19 @@ class CourseTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Название должно быть не менее 3 символов'
         );
+    }
+
+    // Проверка создания курса
+    public function testCourseCreation(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+        $countCourseBeforeAdding = count(self::getEntityManager()->getRepository(Course::class)->findAll());
+
+        // Перейти в форму добавления
+        $link = $crawler->selectLink('Добавить новый курс')->link();
+        $client->click($link);
+        $this->assertResponseOk();
 
         // Правильная форма
         $client->submitForm('Сохранить', [

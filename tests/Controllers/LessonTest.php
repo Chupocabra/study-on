@@ -24,7 +24,7 @@ class LessonTest extends AbstractTest
         }
     }
 
-    // ПРоверка http статусов POST
+    // Проверка http статусов POST
     public function testPostLessonsActions(): void
     {
         $client = self::getClient();
@@ -66,13 +66,12 @@ class LessonTest extends AbstractTest
 
     public function wrongUrlProvider(): \Generator
     {
-        yield ['/asd'];
         yield ['/lessons/-1'];
         yield ['/lessons/-1/edit'];
     }
 
-    // ПРоверка на создание урока
-    public function testLessonCreation(): void
+    // Проверить форму с пустым номером
+    public function testEmptyNumber(): void
     {
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
@@ -98,6 +97,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Порядковый номер урока не может быть пустым'
         );
+    }
+
+    // Проверить форму с номером > 10000
+    public function testBigNumber(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с номером > 10000
         $client->submitForm('Сохранить', [
@@ -109,6 +126,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Значение поля должно быть от 1 до 10000'
         );
+    }
+
+    // Проверить форму с пустым именем
+    public function testEmptyName(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с пустым именем
         $client->submitForm('Сохранить', [
@@ -120,7 +155,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Название не может быть пустым'
         );
+    }
 
+    // Проверка формы с коротким именем
+    public function testShortName(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с коротким именем
         $client->submitForm('Сохранить', [
@@ -132,6 +184,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Название должно содержать более 3 символов'
         );
+    }
+
+    // Проверка формы с длинным именем
+    public function testLongName(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с длинным именем
         $name = '0987654321';
@@ -144,6 +214,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Название должно быть не более 255 символов'
         );
+    }
+
+    // Проферка на форму с некорректным номером
+    public function testIncorrectNumber(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с некорректным номером
         $client->submitForm('Сохранить', [
@@ -155,6 +243,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Значение недопустимо'
         );
+    }
+
+    // Проверка на форму с пустым описанием
+    public function testEmptyDescription(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Форма с пустым описанием
         $client->submitForm('Сохранить', [
@@ -166,6 +272,24 @@ class LessonTest extends AbstractTest
             '.invalid-feedback.d-block',
             'Поле не может быть пустым'
         );
+    }
+
+    // Проверка на создание урока
+    public function testLessonCreation(): void
+    {
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // К курсу
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $lessonCountBeforeAdding = count($crawler->filter('.list-group-item'));
+        $this->assertResponseOk();
+
+        // К добавлению урока
+        $link = $crawler->selectLink('Добавить урок')->link();
+        $crawler = $client->click($link);
+        $this->assertResponseOk();
 
         // Правильная форма
         $client->submitForm('Сохранить', [
@@ -263,7 +387,7 @@ class LessonTest extends AbstractTest
 
         // К уроку
         $link = $crawler->filter('.lesson')->first()->link();
-        $crawler = $client->click($link);
+        $client->click($link);
         $this->assertResponseOk();
 
         // Удаление и редирект
