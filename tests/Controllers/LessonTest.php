@@ -12,6 +12,8 @@ class LessonTest extends AbstractTest
     // Проверка http статусов GET
     public function testGetLessonsActions(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $lessons = self::getEntityManager()->getRepository(Lesson::class)->findAll();
         foreach ($lessons as $lesson) {
@@ -27,6 +29,8 @@ class LessonTest extends AbstractTest
     // Проверка http статусов POST
     public function testPostLessonsActions(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $lessons = self::getEntityManager()->getRepository(Lesson::class)->findAll();
         foreach ($lessons as $lesson) {
@@ -42,6 +46,8 @@ class LessonTest extends AbstractTest
     // Проверка на имя курса
     public function testCourseName(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $lessons = self::getEntityManager()->getRepository(Lesson::class)->findAll();
         foreach ($lessons as $lesson) {
@@ -58,6 +64,8 @@ class LessonTest extends AbstractTest
      */
     public function testWrongURL($url): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $client->request('GET', $url);
 
@@ -73,6 +81,8 @@ class LessonTest extends AbstractTest
     // Проверить форму с пустым номером
     public function testEmptyNumber(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -102,6 +112,8 @@ class LessonTest extends AbstractTest
     // Проверить форму с номером > 10000
     public function testBigNumber(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -131,6 +143,8 @@ class LessonTest extends AbstractTest
     // Проверить форму с пустым именем
     public function testEmptyName(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -160,6 +174,8 @@ class LessonTest extends AbstractTest
     // Проверка формы с коротким именем
     public function testShortName(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -189,6 +205,8 @@ class LessonTest extends AbstractTest
     // Проверка формы с длинным именем
     public function testLongName(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -219,6 +237,8 @@ class LessonTest extends AbstractTest
     // Проферка на форму с некорректным номером
     public function testIncorrectNumber(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -248,6 +268,8 @@ class LessonTest extends AbstractTest
     // Проверка на форму с пустым описанием
     public function testEmptyDescription(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -277,6 +299,8 @@ class LessonTest extends AbstractTest
     // Проверка на создание урока
     public function testLessonCreation(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -317,6 +341,8 @@ class LessonTest extends AbstractTest
     // Проверить редактирование
     public function testLessonEdit(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -359,6 +385,8 @@ class LessonTest extends AbstractTest
     // Проверить удаление
     public function testLessonDelete(): void
     {
+        $this->loginAsAdmin();
+
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
 
@@ -396,6 +424,58 @@ class LessonTest extends AbstractTest
         $crawler = $client->followRedirect();
         // Посчитать уроки
         self::assertCount($lessonCountBeforeDeleting - 1, $crawler->filter('.list-group-item'));
+    }
+    // User пытается изменить урок
+    public function testLessonEditByUser()
+    {
+        $this->loginAsAdmin(false);
+        $client = self::getClient();
+        $client->request('POST', '/lessons/' .
+            self::getEntityManager()->getRepository(Lesson::class)->findAll()[0]->getId() . '/edit');
+        $this->assertResponseCode(403);
+    }
+    // User пытается удалить урок
+    public function testLessonDeleteByUser()
+    {
+        $this->loginAsAdmin(false);
+        $client = self::getClient();
+        $client->request('POST', '/lessons/' .
+            self::getEntityManager()->getRepository(Lesson::class)->findAll()[0]->getId());
+        $this->assertResponseCode(403);
+    }
+    // Страницы, недоступные публично, неавторизованный пользователь
+    public function testNonAuthPages()
+    {
+        $client = $this->getClient();
+        // Просмотр урока
+        $client->request('GET', '/lessons/100');
+        $this->assertResponseRedirect();
+        $this->assertSame('/login', $client->getResponse()->headers->get('location'));
+        // Переход в профиль
+        $client->request('GET', '/profile');
+        $this->assertResponseRedirect();
+        $this->assertSame('/login', $client->getResponse()->headers->get('location'));
+    }
+    // Страницы, недоступные публично, авторизованный пользователь
+    public function testAuthPages()
+    {
+        $this->loginAsAdmin(false);
+        // Переход к уроку
+        $client = $this->getClient();
+        $crawler = $client->request('GET', '/courses');
+        $link = $crawler->filter('.app_course_show')->first()->link();
+        $crawler = $client->click($link);
+        $link = $crawler->filter('.lesson')->first()->link();
+        $client->click($link);
+        $this->assertResponseOk();
+        // Переход в профиль
+        $client->request('GET', '/profile');
+        $this->assertResponseOk();
+    }
+    public function loginAsAdmin($admin = true)
+    {
+        $login = new SecurityTest();
+        return $login->login($admin);
     }
 
     public function getFixtures(): array

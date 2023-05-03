@@ -1,26 +1,40 @@
 <!DOCTYPE html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
-        {# Run `composer require symfony/webpack-encore-bundle` to start using Symfony UX #}
-        <nav class="navbar navbar-expand navbar-dark text-bg-light bg-info fs-1">
-            <div class="container-fluid">
-                StudyOn
-            </div>
-        </nav>
-        {% block stylesheets %}
-            {{ encore_entry_link_tags('app') }}
-        {% endblock %}
-
-        {% block javascripts %}
-            {{ encore_entry_script_tags('app') }}
-        {% endblock %}
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Welcome!{% endblock %}</title>
+    <link rel="icon"
+          href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
+    {# Run `composer require symfony/webpack-encore-bundle` to start using Symfony UX #}
+    <nav class="navbar navbar-expand navbar-dark text-bg-light bg-info">
         <div class="container-fluid">
-            {% block body %}{% endblock %}
+            <div>
+                <a class="btn btn-lg btn-info fs-1" href="{{ path('app_course_index') }}">StudyOn</a>
+            </div>
+            {% if app.user %}
+                <div>
+                    <a class="btn btn-lg btn-light" href="{{ path('app_profile') }}">Профиль</a>
+                    <a class="btn btn-lg btn-dark" href="{{ path('app_logout') }}">Выход</a>
+                </div>
+            {% else %}
+                <div>
+                    <a class="btn btn-lg btn-light" href="{{ path('app_login') }}">Вход</a>
+                    <a class="btn btn-lg btn-light" href="{{ path('app_register') }}">Регистрация</a>
+                </div>
+            {% endif %}
         </div>
-    </body>
+    </nav>
+    {% block stylesheets %}
+        {{ encore_entry_link_tags('app') }}
+    {% endblock %}
+
+    {% block javascripts %}
+        {{ encore_entry_script_tags('app') }}
+    {% endblock %}
+</head>
+<body>
+<div class="container-fluid">
+    {% block body %}{% endblock %}
+</div>
+</body>
 </html>

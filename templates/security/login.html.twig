@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Авторизация{% endblock %}
+
+{% block body %}
+    <form method="post">
+        {% if error %}
+            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        {% endif %}
+        <div class="container mt-2">
+            <h1 class="h3 mb-3 font-weight-normal text-center">Введите данные для входа</h1>
+            <h2 class="h4">Ещё не зарегистрированы? <a href="{{ path('app_register') }}">Регистрация</a></h2>
+            <label for="inputEmail">Электронная почта</label>
+            <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control"
+                   autocomplete="email" required autofocus>
+            <label for="inputPassword">Пароль</label>
+            <input type="password" name="password" id="inputPassword" class="form-control"
+                   autocomplete="current-password" required>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <div class="checkbox mb-3">
+                <label>
+                    <input type="checkbox" name="_remember_me"> Запомнить меня
+                </label>
+            </div>
+            <div class="text-center">
+                <button class="btn btn-lg btn-primary" type="submit">
+                    Авторизация
+                </button>
+            </div>
+        </div>
+    </form>
+{% endblock %}

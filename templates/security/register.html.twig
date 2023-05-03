@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Регистрация{% endblock %}
+{% form_theme form 'bootstrap_5_layout.html.twig' %}
+{% block body %}
+    <form method="post">
+        {% if errors %}
+            <div class="alert alert-danger">
+                {% for error in errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="container mt-2">
+            <h1 class="h3 mb-3 font-weight-normal text-center">Укажите данные для регистрации</h1>
+            <h2 class="h4">Уже зарегистрированы? <a href="{{ path('app_login') }}">Вход</a></h2>
+            {{ form_start(form) }}
+            {{ form_widget(form) }}
+            <div class="text-center">
+                <button class="btn btn-outline-primary">{{ button_label|default('Регистрация') }}</button>
+            </div>
+            {{ form_end(form) }}
+        </div>
+    </form>
+{% endblock %}

@@ -20,9 +20,13 @@
             {% endfor %}
         </div>
     </div>
+    {% if is_granted('ROLE_SUPER_ADMIN') %}
     <div class="d-flex justify-content-center">
         <a class="btn btn-outline-primary " href="{{ path('app_course_new') }}">Добавить новый курс</a>
     </div>
+    {% endif %}
+
+
     <style>
         .course-card {
             padding: 1px;
