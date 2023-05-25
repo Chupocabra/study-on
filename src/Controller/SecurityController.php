@@ -6,6 +6,8 @@ use App\Exception\BillingException;
 use App\Exception\BillingUnavailableException;
 use App\Form\RegisterType;
 use App\DTO\UserDto;
+use App\Repository\CourseRepository;
+use App\Security\User;
 use App\Security\UserAuthenticator;
 use App\Service\BillingClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -92,5 +94,43 @@ class SecurityController extends AbstractController
             'form' => $form->createView(),
             'errors' => ''
         ]);
+    }
+    /**
+     * @Route("/history", name="app_history", methods={"GET"})
+     */
+    public function getTransactionsHistory(BillingClient $client, CourseRepository $courseRepository)
+    {
+        try {
+            /** @var User $user */
+            $user = $this->getUser();
+            if (!$user) {
+                $this->addFlash('error', 'Авторизуйтесь');
+                return $this->redirectToRoute('app_login');
+            }
+            $transactions = $client->getTransactions($user->getApiToken(), []);
+            $date = [];
+            $courses = [];
+            $expire_date = [];
+            foreach ($transactions as $transaction) {
+                if (isset($transaction['course_code'])) {
+                    $course = $courseRepository->findOneBy(['code' => $transaction['course_code']]);
+                    $courses[$transaction['id']] = $course->getId();
+                }
+                $date[$transaction['id']] = date_format(date_create($transaction['created_at']['date']), 'd.m.Y');
+                if (!is_null($transaction['expires'])) {
+                    $expire_date[$transaction['id']] =
+                        date_format(date_create($transaction['expires']['date']), 'd.m.Y');
+                }
+            }
+            return $this->render('security/history.html.twig', [
+                'transactions' => $transactions,
+                'date' => $date,
+                'courses' => $courses,
+                'expires' => $expire_date,
+            ]);
+        } catch (BillingException | BillingUnavailableException $e) {
+            $this->addFlash('error', $e->getMessage());
+            return $this->redirectToRoute('app_course_index');
+        }
     }
 }

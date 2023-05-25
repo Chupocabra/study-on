@@ -32,7 +32,7 @@ class BillingClient
                 throw new BillingException($result['message']);
             }
         }
-        return User::fromDto($this->currentUser($result['token']))->setApiToken($result['token']);
+        return User::fromDto($this->currentUser($result['token']), $result['token'], $result['refresh_token']);
     }
 
     /**
@@ -50,7 +50,7 @@ class BillingClient
                 throw new BillingException(json_encode($result['message'], true));
             }
         }
-        return User::fromDto($this->currentUser($result['token']))->setApiToken($result['token']);
+        return User::fromDto($this->currentUser($result['token']), $result['token'], $result['refresh_token']);
     }
 
     /**
@@ -65,5 +65,87 @@ class BillingClient
             throw new BillingException($result['message']);
         }
         return $this->serializer->deserialize($response, UserDto::class, 'json');
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function refresh($refresh_token): User
+    {
+        $response = (new ApiClient())->post('/api/v1/token/refresh', $refresh_token);
+        $result = json_decode($response, true);
+        if (isset($result['code'])) {
+            if ($result['code'] === 401) {
+                throw new BillingException('Ошибка авторизации.');
+            } elseif ($result['code'] !== 200) {
+                throw new BillingException($result['message']);
+            }
+        }
+        return User::fromDto($this->currentUser($result['token']), $result['token'], $result['refresh_token']);
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function getCourses(): array
+    {
+        $response = (new ApiClient())->get('/api/v1/courses');
+        $result = json_decode($response, true);
+        if (isset($result['code'])) {
+            throw new BillingException($result['message']);
+        }
+        return $result;
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function getCourse(string $code)
+    {
+        $response = (new ApiClient())->get("/api/v1/courses/$code");
+        $result = json_decode($response, true);
+        if (isset($result['message'])) {
+            throw new BillingException($result['message']);
+        }
+        return $result;
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function payCourse(string $code, string $userToken)
+    {
+        $response = (new ApiClient())->post("/api/v1/courses/$code/pay", null, [
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $userToken,
+        ]);
+        $result = json_decode($response, true);
+        if (isset($result['code'])) {
+            throw new BillingException($result['message']);
+        }
+         return $result;
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function getTransactions(string $userToken, array $filters): array
+    {
+        $response = (new ApiClient())->get('/api/v1/transactions?' . http_build_query($filters), [
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $userToken,
+        ]);
+        $result = json_decode($response, true);
+        if (isset($result['code'])) {
+            throw new BillingException($result['message']);
+        }
+        return $result;
     }
 }

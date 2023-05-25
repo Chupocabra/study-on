@@ -2,6 +2,7 @@
 
 namespace Controllers;
 
+use App\Service\BillingClient;
 use App\Tests\AbstractTest;
 use App\Tests\Mock\BillingClientMock;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -19,7 +20,7 @@ class SecurityTest extends AbstractTest
     ];
 
     // Авторизация и выход
-    public function testAuthLogout()
+    public function testAuthAndLogout()
     {
         $client = $this->billingClient();
 
@@ -28,7 +29,7 @@ class SecurityTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
-        $formButton = $crawler->selectButton('Авторизация');
+        $formButton = $crawler->selectButton('Вход');
         $form = $formButton->form([
             'email' => $this->userCredentials['email'],
             'password' => $this->userCredentials['password']
@@ -37,7 +38,7 @@ class SecurityTest extends AbstractTest
         $this->assertResponseRedirect();
         $crawler = $client->followRedirect();
         $this->assertEquals('/courses', $client->getRequest()->getPathInfo());
-
+        $this->assertResponseOk();
         $link = $crawler->selectLink('Выход')->link();
         $client->click($link);
 
@@ -55,7 +56,7 @@ class SecurityTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
-        $formButton = $crawler->selectButton('Авторизация');
+        $formButton = $crawler->selectButton('Вход');
         $form = $formButton->form([
             'email' => $this->userCredentials['email'],
             'password' => $this->userCredentials['password'] . '123'
@@ -204,7 +205,7 @@ class SecurityTest extends AbstractTest
         );
     }
     // Регистрация и выход
-    public function testRegisterLogout()
+    public function testRegisterAndLogout()
     {
         $client = $this->billingClient();
         $crawler = $client->request('GET', '/courses');
@@ -232,18 +233,13 @@ class SecurityTest extends AbstractTest
 
     public function login(bool $admin)
     {
-        $client = $this->getClient();
-        $client->disableReboot();
-        $client->getContainer()->set(
-            'App\Service\BillingClient',
-            new BillingClientMock($client->getContainer()->get(SerializerInterface::class))
-        );
-
+        $this->billingClient();
+        $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
         $link = $crawler->selectLink('Вход')->link();
         $crawler = $client->click($link);
         $this->assertResponseOk();
-        $formButton = $crawler->selectButton('Авторизация');
+        $formButton = $crawler->selectButton('Вход');
         if ($admin) {
             $form = $formButton->form([
                 'email' => $this->adminCredentials['email'],
@@ -267,9 +263,9 @@ class SecurityTest extends AbstractTest
         $client = $this->getClient();
         $client->disableReboot();
         $client->getContainer()->set(
-            'App\Service\BillingClient',
+            BillingClient::class,
             new BillingClientMock($client->getContainer()->get(SerializerInterface::class))
         );
-        return $client;
+        return $this->getClient();
     }
 }

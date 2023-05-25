@@ -8,10 +8,37 @@
     <div class="container">
         <div class="row ">
             {% for course in courses %}
-                <div class="col-6 mb-2 course-card">
-                    <div class="fs-4"><a class="app_course_show" href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }} </a>
+                {% include 'course/modal.html.twig' with { course : course, info : info} %}
+                <div class="col-6 mb-2 course-card p-1">
+                    <div class="fs-4"><a class="app_course_show"
+                                         href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }} </a>
                     </div>
                     <div>{{ course.description }}</div>
+                    {% if info[course.code] is defined %}
+                        <div class="text-end {{ info[course.code].style }}">
+                            <span class="course_current_status">{{ info[course.code].type }}</span>
+                            {% if is_granted('ROLE_USER') and info[course.code].price!=0 %}
+                                <button type="button" title="{{ info[course.code].title }}"
+                                        class="btn btn-outline-dark"
+                                        {% if balance < info[course.code].price %}
+                                            disabled
+                                        {% endif %}
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#buy-modal-{{ course.code }}">
+                                    {{ info[course.code].price }}
+                                    {% if info[course.code].type is defined %}
+                                        {% if info[course.code].type is same as 'Курс в аренду' %}
+                                            рублей в неделю
+                                        {% else %}
+                                            рублей
+                                        {% endif %}
+                                    {% endif %}
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-end text-primary">Бесплатный курс</div>
+                    {% endif %}
                 </div>
             {% else %}
                 <div>
@@ -21,11 +48,10 @@
         </div>
     </div>
     {% if is_granted('ROLE_SUPER_ADMIN') %}
-    <div class="d-flex justify-content-center">
-        <a class="btn btn-outline-primary " href="{{ path('app_course_new') }}">Добавить новый курс</a>
-    </div>
+        <div class="d-flex justify-content-center mb-2">
+            <a class="btn btn-outline-primary app_course_new" href="{{ path('app_course_new') }}">Добавить новый курс</a>
+        </div>
     {% endif %}
-
 
     <style>
         .course-card {

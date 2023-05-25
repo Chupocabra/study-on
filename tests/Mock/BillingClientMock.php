@@ -7,6 +7,7 @@ use App\Exception\BillingException;
 use App\Exception\BillingUnavailableException;
 use App\Security\User;
 use App\Service\BillingClient;
+use App\Service\JwtDecode;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class BillingClientMock extends BillingClient
@@ -14,6 +15,12 @@ class BillingClientMock extends BillingClient
     private array $user;
 
     private array $admin;
+
+    private array $courses;
+
+    private array $admin_transactions;
+
+    private array $user_transactions;
 
     public function __construct(SerializerInterface $serializer)
     {
@@ -29,6 +36,157 @@ class BillingClientMock extends BillingClient
             'password' => 'admin',
             'balance' => 1000,
             'roles' => ['ROLE_SUPER_ADMIN', 'ROLE_USER']
+        ];
+        $this->courses = [
+            [
+                "code" => "frontend-dev",
+                "type" => "free",
+                "price" => 0
+            ],
+            [
+                "code" => "python-dev",
+                "type" => "rent",
+                "price" => 1000
+            ],
+            [
+                "code" => "data-analyst",
+                "type" => "rent",
+                "price" => 800
+            ],
+            [
+                "code" => "java-dev",
+                "type" => "buy",
+                "price" => 2800
+            ],
+            [
+                "code" => "php-dev",
+                "type" => "buy",
+                "price" => 3200
+            ],
+        ];
+        $this->user_transactions = [
+            [
+                "id" => 15,
+                "created_at" => [
+                    "date" => "2023-05-11 09:09:20.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "payment",
+                "course_code" => "python-dev",
+                "value" => 1000,
+                "expires" => [
+                    "date" => "2023-05-18 09:09:20.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ]
+            ],
+            [
+                "id" => 3,
+                "created_at" => [
+                    "date" => "2023-05-10 16:37:23.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "deposit",
+                "value" => 1000,
+                "expires" => null
+            ],
+            [
+                "id" => 10,
+                "created_at" => [
+                    "date" => "2023-05-02 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "payment",
+                "course_code" => "java-dev",
+                "value" => 2800,
+                "expires" => null
+            ],
+            [
+                "id" => 8,
+                "created_at" => [
+                    "date" => "2023-04-10 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "deposit",
+                "value" => 4000,
+                "expires" => null
+            ],
+            [
+                "id" => 7,
+                "created_at" => [
+                    "date" => "2023-04-08 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "payment",
+                "course_code" => "data-analyst",
+                "value" => 800,
+                "expires" => [
+                    "date" => "2023-04-13 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ]
+            ],
+            [
+                "id" => 6,
+                "created_at" => [
+                    "date" => "2023-04-08 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "deposit",
+                "value" => 600,
+                "expires" => null
+            ],
+            [
+                "id" => 5,
+                "created_at" => [
+                    "date" => "2023-03-31 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "payment",
+                "course_code" => "data-analyst",
+                "value" => 800,
+                "expires" => [
+                    "date" => "2023-04-07 16:37:24.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ]
+            ]
+        ];
+        $this->admin_transactions = [
+            [
+                "id" => 4,
+                "created_at" => [
+                    "date" => "2023-05-10 16:37:23.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "deposit",
+                "value" => 1000,
+                "expires" => null
+            ],
+            [
+                "id" => 16,
+                "created_at" => [
+                    "date" => "2023-05-11 11:45:47.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ],
+                "type" => "payment",
+                "course_code" => "python-dev",
+                "value" => 1000,
+                "expires" => [
+                    "date" => "2023-05-18 11:45:47.000000",
+                    "timezone_type" => 3,
+                    "timezone" => "UTC"
+                ]
+            ],
         ];
         $this->serializer = $serializer;
     }
@@ -47,6 +205,7 @@ class BillingClientMock extends BillingClient
             $user
                 ->setEmail($username)
                 ->setApiToken($token)
+                ->setRefreshToken('123456qwerty')
                 ->setRoles($this->user['roles']);
             return $user;
         } elseif ($username == $this->admin['username'] && $password == $this->admin['password']) {
@@ -54,6 +213,7 @@ class BillingClientMock extends BillingClient
             $user
                 ->setEmail($username)
                 ->setApiToken($token)
+                ->setRefreshToken('123456qwerty')
                 ->setRoles($this->admin['roles']);
             return $user;
         } else {
@@ -69,7 +229,7 @@ class BillingClientMock extends BillingClient
         $credentials = json_decode($credentials, true);
         $username = $credentials["username"];
         if ($username === $this->user['username'] || $username === $this->admin['username']) {
-            throw new BillingException(json_encode('Пользователь с такой почтой уже существует', true));
+            throw new BillingException(json_encode('MOCK:Пользователь с такой почтой уже существует', true));
         }
         $token = $this->generateToken($username, $this->user['roles']);
         $user = new User();
@@ -82,32 +242,69 @@ class BillingClientMock extends BillingClient
 
     public function currentUser($token): UserDto
     {
-        $user = $this->decodeToken($token);
+        [$exp, $roles, $username] = (new JwtDecode())->jwtDecode($token);
         $userDto = new UserDto();
-        $userDto->setUsername($user['username']);
-        $userDto->setRoles($user['roles']);
-        if ($user['username'] === $this->user['username']) {
+        $userDto->setUsername($username);
+        $userDto->setRoles($roles);
+        if ($username === $this->user['username']) {
             $userDto->setBalance($this->user['balance']);
-        } elseif ($user['username'] === $this->admin['username']) {
+        } elseif ($username === $this->admin['username']) {
             $userDto->setBalance($this->admin['balance']);
         }
         return $userDto;
     }
 
+    public function getCourses(): array
+    {
+        return $this->courses;
+    }
+
+    public function getCourse(string $code)
+    {
+        foreach ($this->courses as $course) {
+            if ($course['code'] === $code) {
+                return $course;
+            }
+        }
+        return 'Курсов не найдено';
+    }
+
+    public function getTransactions(string $userToken, array $filters): array
+    {
+        $username = (new JwtDecode())->jwtDecode($userToken)[2];
+        if ($username == $this->user['username']) {
+            $transactions = $this->user_transactions;
+        } elseif ($username == $this->admin['username']) {
+            $transactions = $this->admin_transactions;
+        } else {
+            throw new BillingException('MOCK:Доступ запрещен');
+        }
+        if (isset($filters['type'])) {
+            $transactions = array_filter($transactions, function ($transaction) use ($filters) {
+                return $transaction['type'] === $filters['type'];
+            });
+        }
+        if (isset($filters['course_code'])) {
+            $transactions = array_filter($transactions, function ($transaction) use ($filters) {
+                return $transaction['course_code'] === $filters['course_code'];
+            });
+        }
+        if (isset($filters['expired'])) {
+            $transactions = array_filter($transactions, function ($transaction) {
+                return $transaction['expires'] > new \DateTimeImmutable() || !isset($transaction['expires']);
+            });
+        }
+        return $transactions;
+    }
+
     private function generateToken(string $username, array $roles): string
     {
         $data = [
+            'exp' => (new \DateTime('+ 1 hour'))->getTimestamp(),
+            'roles' => $roles,
             'username' => $username,
-            'roles' => $roles
         ];
         $query = base64_encode(json_encode($data));
         return 'header.' . $query . '.signature';
-    }
-
-    private function decodeToken($token): array
-    {
-        $parts = explode('.', $token);
-        $payload = json_decode(base64_decode($parts[1]), true);
-        return ['username' => $payload['username'], 'roles' => $payload['roles']];
     }
 }

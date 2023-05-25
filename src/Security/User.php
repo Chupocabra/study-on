@@ -13,6 +13,19 @@ class User implements UserInterface
 
     private ?string $apiToken;
 
+    private ?string $refresh_token;
+
+    public function getRefreshToken(): ?string
+    {
+        return $this->refresh_token;
+    }
+
+    public function setRefreshToken(?string $refresh_token): self
+    {
+        $this->refresh_token = $refresh_token;
+
+        return $this;
+    }
     public function getEmail(): ?string
     {
         return $this->email;
@@ -103,10 +116,12 @@ class User implements UserInterface
         return $this;
     }
 
-    public static function fromDto(UserDto $userDto): self
+    public static function fromDto(UserDto $userDto, string $apiToken, string $refresh_token): self
     {
         return (new User())
             ->setEmail($userDto->getUsername())
-            ->setRoles($userDto->getRoles());
+            ->setRoles($userDto->getRoles())
+            ->setApiToken($apiToken)
+            ->setRefreshToken($refresh_token);
     }
 }

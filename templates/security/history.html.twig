@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %} Транзакции / Профиль пользователя {% endblock %}
+
+{% block body %}
+    <h2>История операций</h2>
+    <table class="table table-bordered table-striped">
+        <tr>
+        <th>Дата</th>
+        <th>Тип</th>
+        <th>Код курса</th>
+        <th>Количество рублей</th>
+        <th>Истекает</th>
+        </tr>
+        <tbody>
+        {% for transaction in transactions %}
+            <tr>
+                <td>
+                    {{ date[transaction.id] }}
+                </td>
+                <td>
+                    {% if transaction.type is same as 'deposit' %}
+                        <div class="text-success">Пополнение</div>
+                    {% else %}
+                        <div class="text-danger">Списание</div>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if transaction.course_code is defined %}
+                        <a href="{{ path('app_course_show', {'id': courses[transaction['id']]}) }}">
+                            {{ transaction.course_code }}
+                        </a>
+                    {% else %}
+                    {% endif %}
+                </td>
+                <td>
+                    {{ transaction.value }}
+                </td>
+                <td>
+                    {% if transaction.expires.date is defined %}
+                        {{ expires[transaction['id']] }}
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

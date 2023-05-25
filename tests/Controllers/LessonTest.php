@@ -446,7 +446,7 @@ class LessonTest extends AbstractTest
     // Страницы, недоступные публично, неавторизованный пользователь
     public function testNonAuthPages()
     {
-        $client = $this->getClient();
+        $client = self::getClient();
         // Просмотр урока
         $client->request('GET', '/lessons/100');
         $this->assertResponseRedirect();
@@ -460,11 +460,15 @@ class LessonTest extends AbstractTest
     public function testAuthPages()
     {
         $this->loginAsAdmin(false);
+        $freeCourseId = self::getEntityManager()
+            ->getRepository(Course::class)
+            ->findOneBy(['code' => 'frontend-dev'])->getId();
         // Переход к уроку
-        $client = $this->getClient();
-        $crawler = $client->request('GET', '/courses');
-        $link = $crawler->filter('.app_course_show')->first()->link();
-        $crawler = $client->click($link);
+        $client = self::getClient();
+        $crawler = $client->request('GET', "/courses/$freeCourseId");
+        $this->assertResponseOk();
+//        $link = $crawler->filter('.app_course_show')->first()->link();
+//        $crawler = $client->click($link);
         $link = $crawler->filter('.lesson')->first()->link();
         $client->click($link);
         $this->assertResponseOk();

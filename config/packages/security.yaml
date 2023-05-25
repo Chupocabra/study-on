@@ -39,6 +39,7 @@ security:
          - { path: ^/courses/new$, methods: [POST, GET], roles: ROLE_SUPER_ADMIN}
          - { path: ^/(courses|lessons)/\d+/edit$, methods: [ POST, GET ], roles: ROLE_SUPER_ADMIN}
          - { path: ^/(courses|lessons)/\d+$, methods: POST, roles: ROLE_SUPER_ADMIN }
+         - { path: ^/(courses|lessons)/\d+$, methods: POST, roles: ROLE_SUPER_ADMIN }
          - { path: ^/courses/\d+/newLesson$, methods: [ POST, GET ], roles: ROLE_SUPER_ADMIN}
          - { path: ^/courses, roles: PUBLIC_ACCESS }
          - { path: ^/lessons, roles: ROLE_USER }

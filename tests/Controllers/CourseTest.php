@@ -38,18 +38,15 @@ class CourseTest extends AbstractTest
     public function testGetCoursesActions(): void
     {
         $this->loginAsAdmin();
-
         $client = self::getClient();
         $courses = self::getEntityManager()->getRepository(Course::class)->findAll();
         foreach ($courses as $course) {
             // страничка курсов
             $client->request('GET', '/courses/' . $course->getId());
             $this->assertResponseOk();
-
             // редактирование курсов
             $client->request('GET', '/courses/' . $course->getId() . '/edit');
             $this->assertResponseOk();
-
             // добавление курса
             $client->request('GET', '/courses/' . $course->getId() . '/newLesson');
             $this->assertResponseOk();
@@ -94,12 +91,13 @@ class CourseTest extends AbstractTest
     // Сравнивает число отображаемых уроков и уроков в БД
     public function testLessonInCourseCount(): void
     {
+        $this->loginAsAdmin();
         $client = self::getClient();
         $courses = self::getEntityManager()->getRepository(Course::class)->findAll();
         foreach ($courses as $course) {
             $crawler = $client->request('GET', '/courses/' . $course->getId());
-            $lessons = $course->getLessons();
-            $this->assertCount(count($lessons), $crawler->filter('li'));
+            $lessons = $course->getLessons()->count();
+            $this->assertCount($lessons, $crawler->filter('li'));
         }
     }
 
@@ -129,11 +127,9 @@ class CourseTest extends AbstractTest
     public function testEmptyCode(): void
     {
         $this->loginAsAdmin();
-
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
-        $countCourseBeforeAdding = count(self::getEntityManager()->getRepository(Course::class)->findAll());
-
+        $this->assertResponseOk();
         // Перейти в форму добавления
         $link = $crawler->selectLink('Добавить новый курс')->link();
         $client->click($link);
@@ -257,18 +253,15 @@ class CourseTest extends AbstractTest
     }
 
     // Проверка редактирования
-    public function testCourseEdit(): void
+    public function testCourseEdit()
     {
         $this->loginAsAdmin();
-
         $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
-
         // Переход к курсу
         $link = $crawler->filter('.app_course_show')->first()->link();
         $crawler = $client->click($link);
         $this->assertResponseOk();
-
         // Переход к редактированию
         $link = $crawler->filter('.app_course_edit')->link();
         $crawler = $client->click($link);
@@ -283,11 +276,17 @@ class CourseTest extends AbstractTest
 
         // Редактирование урока
         $client->submitForm('Редактировать', [
-            'course[code]' => 'newCode',
+            'course[name]' => 'oldName',
+            'course[description]' => 'oldDescription'
+        ]);
+        $crawler = $client->followRedirect();
+        $link = $crawler->filter('.app_course_edit')->link();
+        $client->click($link);
+        // Повторное редактирование урока
+        $client->submitForm('Редактировать', [
             'course[name]' => 'newName',
             'course[description]' => 'newDescription'
         ]);
-
         // Проверить редирект
         $this->assertSame('/courses/' . $courseId, $client->getResponse()->headers->get('location'));
         $crawler = $client->followRedirect();
@@ -297,16 +296,14 @@ class CourseTest extends AbstractTest
     }
 
     // Проверка удаления
-    public function testCourseDelete(): void
+    public function testCourseDelete()
     {
         $this->loginAsAdmin();
-
+        $client = self::getClient();
         // Все курсы и уроки
         $coursesCountBeforeDelete = self::getEntityManager()->getRepository(Course::class)->findAll();
         $lessonsCountBeforeDelete = self::getEntityManager()->getRepository(Lesson::class)->findAll();
-        $client = self::getClient();
         $crawler = $client->request('GET', '/courses');
-
         // К курсу
         $link = $crawler->filter('.app_course_show')->first()->link();
         $crawler = $client->click($link);
@@ -371,5 +368,30 @@ class CourseTest extends AbstractTest
     {
         $login = new SecurityTest();
         return $login->login($admin);
+    }
+
+    // История транзакций в профиле
+    public function testUserProfile()
+    {
+        $this->loginAsAdmin(false);
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/profile');
+        $link = $crawler->selectLink('история транзакций')->link();
+        $crawler = $client->click($link);
+        $this->assertCount(7, $crawler->filter('tr'));
+    }
+    // Страница доступного курса
+    public function testPurchasedCourse()
+    {
+        $this->loginAsAdmin(false);
+        $client = self::getClient();
+        $purchasedCourseId = self::getEntityManager()
+            ->getRepository(Course::class)
+            ->findOneBy(['code' => 'java-dev'])->getId();
+        $crawler = $client->request('GET', "courses/$purchasedCourseId");
+        $this->assertResponseOk();
+        $link = $crawler->filter('.lesson')->first()->link();
+        $client->click($link);
+        $this->assertResponseOk();
     }
 }

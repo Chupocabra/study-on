@@ -1,0 +1,37 @@
+<div class="modal fade"
+     id="buy-modal-{{ course.code }}"
+     tabindex="-1"
+     aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Подтверждение покупки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h4>
+                    Вы уверены, что хотите совершить покупку?
+                </h4>
+                <h5>
+                    {% if info[course.code] is defined %}
+                        Стоимость
+                        курса {{ info[course.code].price }}
+                    {% endif %}
+                    {% if info[course.code].type is defined %}
+                        {% if info[course.code].type is same as 'Курс в аренду' %}
+                            рублей в неделю.
+                        {% else %}
+                            рублей.
+                        {% endif %}
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <a role="button" methods="POST" href="{{ path('app_course_pay', { 'id' : course.id }) }}" type="button"
+                   class="btn btn-primary">Подтвердить</a>
+            </div>
+        </div>
+    </div>
+</div>

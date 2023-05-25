@@ -22,5 +22,7 @@ services:
     App\Service\BillingClient:
         public: true
 
+    App\Service\JwtDecode:
+        public: true
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
