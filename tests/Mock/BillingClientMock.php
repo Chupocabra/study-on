@@ -289,7 +289,7 @@ class BillingClientMock extends BillingClient
                 return $transaction['course_code'] === $filters['course_code'];
             });
         }
-        if (isset($filters['expired'])) {
+        if (isset($filters['skip_expired'])) {
             $transactions = array_filter($transactions, function ($transaction) {
                 return $transaction['expires'] > new \DateTimeImmutable() || !isset($transaction['expires']);
             });
@@ -306,5 +306,39 @@ class BillingClientMock extends BillingClient
         ];
         $query = base64_encode(json_encode($data));
         return 'header.' . $query . '.signature';
+    }
+
+    public function payCourse(string $code, string $userToken)
+    {
+        $course = $this->getCourse($code);
+        $username = ((new JwtDecode())->jwtDecode($userToken))[2];
+        if ($username == $this->user['username']) {
+            if ($this->user['balance'] < $course['price']) {
+                return [
+                    'code' => 406,
+                    'message' => 'MOCK:Недостаточно средств'
+                ];
+            }
+        } elseif ($username == $this->admin['username']) {
+            if ($this->admin['balance'] < $course['price']) {
+                return [
+                    'code' => 406,
+                    'message' => 'MOCK:Недостаточно средств'
+                ];
+            }
+        } else {
+            return [
+                'code' => 401,
+                'message' => 'MOCK:Пользователь не авторизован'
+            ];
+        }
+        $response = [
+            'success' => true,
+            'course_type' => $course['type'],
+        ];
+        if ($course['type'] == 'rent') {
+            $response['expires_at'] = (new \DateTime())->add(new \DateInterval("P7D"));
+        }
+        return $response;
     }
 }

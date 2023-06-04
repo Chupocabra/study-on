@@ -394,4 +394,43 @@ class CourseTest extends AbstractTest
         $client->click($link);
         $this->assertResponseOk();
     }
+    // DONE: проверить покупку курса
+    public function testBuyCourse()
+    {
+        $this->loginAsAdmin(false);
+        $client = self::getClient();
+        $courseId = self::getEntityManager()
+            ->getRepository(Course::class)
+            ->findOneBy(['code' => 'data-analyst'])->getId();
+        $client->request('GET', "courses/$courseId");
+        $this->assertResponseRedirect();
+        $this->assertSame('/courses', $client->getResponse()->headers->get('location'));
+        $crawler = $client->followRedirect();
+        $button = $crawler->filter("#modalButton$courseId")->form();
+        $client->submit($button);
+        $confirmBtn = $crawler->filter("#buy_course$courseId")->first()->link();
+        $client->click($confirmBtn);
+        $crawler = $client->followRedirect();
+        $this->assertSelectorExists('.alert');
+        $this->assertSelectorTextContains('.alert', 'Вы приобрели курс');
+    }
+    public function testBuyCourseNotEnoughMoney()
+    {
+        $this->loginAsAdmin(false);
+        $client = self::getClient();
+        $courseId = self::getEntityManager()
+            ->getRepository(Course::class)
+            ->findOneBy(['code' => 'php-dev'])->getId();
+        $client->request('GET', "courses/$courseId");
+        $this->assertResponseRedirect();
+        $this->assertSame('/courses', $client->getResponse()->headers->get('location'));
+        $crawler = $client->followRedirect();
+        $button = $crawler->filter("#modalButton$courseId")->form();
+        $client->submit($button);
+        $confirmBtn = $crawler->filter("#buy_course$courseId")->first()->link();
+        $client->click($confirmBtn);
+        $crawler = $client->followRedirect();
+        $this->assertSelectorExists('.alert');
+        $this->assertSelectorTextContains('.alert', 'MOCK:Недостаточно средств');
+    }
 }

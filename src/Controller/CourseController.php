@@ -37,52 +37,31 @@ class CourseController extends AbstractController
                 /** @var User $user */
                 $user = $this->getUser();
                 $transactions = $client->getTransactions($user->getApiToken(), [
-                    'type' => 'payment', 'skip_expired' => true]);
+                    'type' => 'payment',
+                    'skip_expired' => true
+                ]);
                 foreach ($transactions as $transaction) {
                     $transactionsInfo[$transaction['course_code']] = $transaction;
                 }
-                $userDto = $client->currentUser($user->getApiToken());
-                $balance = $userDto->getBalance();
+                $balance = $client->currentUser($user->getApiToken())->getBalance();
             }
-            $info = [];
+            $userCourses = [];
+            $anotherCourses = [];
             foreach ($billingCourses as $course) {
                 if (isset($transactionsInfo[$course['code']])) {
+                    $userCourses[$course['code']] = $course;
                     if ($course['type'] === 'rent') {
-                        $type = 'Арендован до ' .
-                            date_format(date_create($transactionsInfo[$course['code']]['expires']['date']), 'd.m.Y');
-                    } else {
-                        $type = 'Приобретен';
+                        $userCourses[$course['code']]['expire'] = $transactionsInfo[$course['code']]['expires']['date'];
                     }
-                    $price = 0;
-                    $title = '';
-                    $style = 'text-primary';
                 } else {
-                    if ($course['type'] === 'free') {
-                        $type = 'Бесплатный курс';
-                        $title = '';
-                        $price = 0;
-                    } elseif ($course['type'] === 'rent') {
-                        $type = 'Курс в аренду';
-                        $price = $course['price'];
-                        $title = 'Арендовать';
-                    } else {
-                        $type = 'Платный курс';
-                        $price = $course['price'];
-                        $title = 'Купить';
-                    }
-                    $style = '';
+                    $anotherCourses[$course['code']] = $course;
                 }
-                $info[$course['code']] = [
-                    'type' => $type,
-                    'price' => $price,
-                    'style' => $style,
-                    'title' => $title
-                ];
             }
             return $this->render('course/index.html.twig', [
                 'courses' => $courseRepository->findAll(),
-                'info' => $info,
                 'balance' => $balance,
+                'userCourses' => $userCourses,
+                'anotherCourses' => $anotherCourses,
             ]);
         } catch (BillingException | BillingUnavailableException $e) {
             $this->addFlash('error', $e->getMessage());

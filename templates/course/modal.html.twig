@@ -19,7 +19,7 @@
                         курса {{ info[course.code].price }}
                     {% endif %}
                     {% if info[course.code].type is defined %}
-                        {% if info[course.code].type is same as 'Курс в аренду' %}
+                        {% if info[course.code].type is same as 'rent' %}
                             рублей в неделю.
                         {% else %}
                             рублей.
@@ -30,7 +30,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                 <a role="button" methods="POST" href="{{ path('app_course_pay', { 'id' : course.id }) }}" type="button"
-                   class="btn btn-primary">Подтвердить</a>
+                   class="btn btn-primary" id="buy_course{{ course.id }}">Подтвердить</a>
             </div>
         </div>
     </div>
