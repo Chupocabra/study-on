@@ -341,4 +341,41 @@ class BillingClientMock extends BillingClient
         }
         return $response;
     }
+
+    public function addCourse(string $userToken, $data): array
+    {
+        $username = ((new JwtDecode())->jwtDecode($userToken))[2];
+        if ($username !== $this->admin['username']) {
+            throw new BillingException('MOCK:Недостаточно прав');
+        }
+        $data = json_decode($data, true);
+        if (in_array($data['code'], array_column($this->courses, 'code'))) {
+            throw new BillingException('MOCK:Код не уникален');
+        }
+        $this->courses[] = $data;
+        return [
+            'success' => true,
+        ];
+    }
+
+    public function editCourse(string $userToken, string $code, $data): array
+    {
+        $username = ((new JwtDecode())->jwtDecode($userToken))[2];
+        if ($username !== $this->admin['username']) {
+            throw new BillingException('MOCK:Недостаточно прав');
+        }
+        $data = json_decode($data, true);
+        if ($code !== $data['code']) {
+            if (in_array($data['code'], array_column($this->courses, 'code'))) {
+                throw new BillingException('MOCK:Код не уникален');
+            }
+        }
+        if (!in_array($code, array_column($this->courses, 'code'))) {
+            throw new BillingException('MOCK:Курс не найден');
+        }
+        $this->courses[] = $data;
+        return [
+            'success' => true,
+        ];
+    }
 }

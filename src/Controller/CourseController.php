@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\CourseDTO;
 use App\Entity\Course;
 use App\Entity\Lesson;
 use App\Exception\BillingException;
@@ -17,18 +18,24 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Security\Http\Authenticator\RemoteUserAuthenticator;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @Route("/courses")
  */
 class CourseController extends AbstractController
 {
+    private CourseRepository $courseRepository;
+
+    public function __construct(CourseRepository $courseRepository)
+    {
+        $this->courseRepository = $courseRepository;
+    }
+
     /**
      * @Route("", name="app_course_index", methods={"GET"})
      */
-    public function index(CourseRepository $courseRepository, BillingClient $client): Response
+    public function index(BillingClient $client): Response
     {
         try {
             $billingCourses = $client->getCourses();
@@ -58,7 +65,7 @@ class CourseController extends AbstractController
                 }
             }
             return $this->render('course/index.html.twig', [
-                'courses' => $courseRepository->findAll(),
+                'courses' => $this->courseRepository->findAll(),
                 'balance' => $balance,
                 'userCourses' => $userCourses,
                 'anotherCourses' => $anotherCourses,
@@ -74,18 +81,44 @@ class CourseController extends AbstractController
     /**
      * @Route("/new", name="app_course_new", methods={"GET", "POST"})
      */
-    public function new(Request $request, CourseRepository $courseRepository): Response
+    public function new(Request $request, BillingClient $client, SerializerInterface $serializer): Response
     {
         $course = new Course();
         $form = $this->createForm(CourseType::class, $course);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $courseRepository->add($course, true);
-
-            return $this->redirectToRoute('app_course_show', ['id' => $course->getId()], Response::HTTP_SEE_OTHER);
+            /** @var User $user */
+            $user = $this->getUser();
+            try {
+                $data = new CourseDTO();
+                $data->price = $form->get('price')->getData();
+                $data->type = $form->get('type')->getData();
+                $data->title = $form->get('name')->getData();
+                $data->code = $form->get('code')->getData();
+                $response = $client->addCourse($user->getApiToken(), $serializer->serialize($data, 'json'));
+                if ($response['success']) {
+                    $this->courseRepository->add($course, true);
+                    return $this->redirectToRoute(
+                        'app_course_show',
+                        ['id' => $course->getId()],
+                        Response::HTTP_SEE_OTHER
+                    );
+                } else {
+                    $this->addFlash('error', $response['message']);
+                    return $this->renderForm('course/new.html.twig', [
+                        'course' => $course,
+                        'form' => $form,
+                    ]);
+                }
+            } catch (BillingException | BillingUnavailableException $e) {
+                $this->addFlash('error', $e->getMessage());
+                return $this->renderForm('course/new.html.twig', [
+                    'course' => $course,
+                    'form' => $form,
+                ]);
+            }
         }
-
         return $this->renderForm('course/new.html.twig', [
             'course' => $course,
             'form' => $form,
@@ -130,17 +163,61 @@ class CourseController extends AbstractController
     /**
      * @Route("/{id}/edit", name="app_course_edit", methods={"GET", "POST"})
      */
-    public function edit(Request $request, Course $course, CourseRepository $courseRepository): Response
-    {
+    public function edit(
+        Request $request,
+        Course $course,
+        BillingClient $client,
+        SerializerInterface $serializer
+    ): Response {
+        try {
+            $billingCourse = $client->getCourse($course->getCode());
+        } catch (BillingException | BillingUnavailableException $e) {
+            $this->addFlash('error', $e->getMessage());
+            return $this->renderForm('course/edit.html.twig', [
+                'course' => $course,
+            ]);
+        }
         $form = $this->createForm(CourseType::class, $course);
+        $form->get('type')->setData($billingCourse['type']);
+        $form->get('price')->setData($billingCourse['price']);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $courseRepository->add($course, true);
-
-            return $this->redirectToRoute('app_course_show', ['id' => $course->getId()], Response::HTTP_SEE_OTHER);
+            try {
+                /** @var User $user */
+                $user = $this->getUser();
+                $data = new CourseDTO();
+                $data->price = $form->get('price')->getData();
+                $data->type = $form->get('type')->getData();
+                $data->title = $form->get('name')->getData();
+                $data->code = $form->get('code')->getData();
+                $response = $client->editCourse(
+                    $user->getApiToken(),
+                    $billingCourse['code'],
+                    $serializer->serialize($data, 'json')
+                );
+                if ($response['success']) {
+                    $this->courseRepository->add($course, true);
+                    return $this->redirectToRoute(
+                        'app_course_show',
+                        ['id' => $course->getId()],
+                        Response::HTTP_SEE_OTHER
+                    );
+                } else {
+                    $this->addFlash('error', $response['message']);
+                    return $this->renderForm('course/new.html.twig', [
+                        'course' => $course,
+                        'form' => $form,
+                    ]);
+                }
+            } catch (BillingException | BillingUnavailableException $e) {
+                $this->addFlash('error', $e->getMessage());
+                return $this->renderForm('course/edit.html.twig', [
+                    'course' => $course,
+                    'form' => $form,
+                ]);
+            }
         }
-
         return $this->renderForm('course/edit.html.twig', [
             'course' => $course,
             'form' => $form,
@@ -150,10 +227,10 @@ class CourseController extends AbstractController
     /**
      * @Route("/{id}", name="app_course_delete", methods={"POST"})
      */
-    public function delete(Request $request, Course $course, CourseRepository $courseRepository): Response
+    public function delete(Request $request, Course $course): Response
     {
         if ($this->isCsrfTokenValid('delete' . $course->getId(), $request->request->get('_token'))) {
-            $courseRepository->remove($course, true);
+            $this->courseRepository->remove($course, true);
         }
 
         return $this->redirectToRoute('app_course_index', [], Response::HTTP_SEE_OTHER);

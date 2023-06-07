@@ -3,14 +3,19 @@
 namespace App\Form;
 
 use App\Entity\Course;
+use Doctrine\DBAL\Types\FloatType;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\PositiveOrZero;
 use Symfony\Component\Validator\Constraints\Unique;
 
 class CourseType extends AbstractType
@@ -30,7 +35,7 @@ class CourseType extends AbstractType
                         null,
                         null,
                         null,
-                        'Симввольный код должен быть не менее 3 символов',
+                        'Символьный код должен быть не менее 3 символов',
                         'Символьный код должен быть не более 255 символов'
                     ),
                 ]
@@ -65,6 +70,37 @@ class CourseType extends AbstractType
                         null,
                         null,
                         'Описание не должно превышать 1000 символов'
+                    )
+                ]
+            ])
+            ->add('price', NumberType::class, [
+                'label' => 'Цена',
+                'mapped' => false,
+                'required' => true,
+                'constraints' => [
+                    new PositiveOrZero(null, 'Укажите корректную стоимость')
+                ]
+            ])
+            ->add('type', ChoiceType::class, [
+                'label' => 'Тип курса',
+                'mapped' => false,
+                'required' => true,
+                'choices' => [
+                    'Аренда' => 'rent',
+                    'Бесплатный' => 'free',
+                    'Полный' => 'buy',
+                ],
+                'constraints' => [
+                    new NotBlank(null, 'Укажите тип курса'),
+                    new Choice(
+                        null,
+                        ['rent', 'free', 'buy'],
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        'Выберите тип курса'
                     )
                 ]
             ]);

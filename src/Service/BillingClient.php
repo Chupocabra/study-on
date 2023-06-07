@@ -105,6 +105,7 @@ class BillingClient
      */
     public function getCourse(string $code)
     {
+        $code = preg_replace("/ /", '%20', $code);
         $response = (new ApiClient())->get("/api/v1/courses/$code");
         $result = json_decode($response, true);
         if (isset($result['message'])) {
@@ -144,6 +145,43 @@ class BillingClient
         ]);
         $result = json_decode($response, true);
         if (isset($result['code'])) {
+            throw new BillingException($result['message']);
+        }
+        return $result;
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function addCourse(string $userToken, $data): array
+    {
+        $response = (new ApiClient())->post('/api/v1/courses', $data, [
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $userToken,
+        ]);
+        $result = json_decode($response, true);
+        if (!$result['success']) {
+            throw new BillingException($result['message']);
+        }
+        return $result;
+    }
+
+    /**
+     * @throws BillingUnavailableException
+     * @throws BillingException
+     */
+    public function editCourse(string $userToken, string $code, $data): array
+    {
+        $code = preg_replace("/ /", '%20', $code);
+        $response = (new ApiClient())->post("/api/v1/courses/$code", $data, [
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $userToken,
+        ]);
+        $result = json_decode($response, true);
+        if (!$result['success']) {
             throw new BillingException($result['message']);
         }
         return $result;

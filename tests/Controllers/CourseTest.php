@@ -222,6 +222,32 @@ class CourseTest extends AbstractTest
             'Название должно быть не менее 3 символов'
         );
     }
+    // Проверка формы с некорректной ценой
+    public function testBadPrice(): void
+    {
+        $this->loginAsAdmin();
+
+        $client = self::getClient();
+        $crawler = $client->request('GET', '/courses');
+
+        // Перейти в форму добавления
+        $link = $crawler->selectLink('Добавить новый курс')->link();
+        $client->click($link);
+        $this->assertResponseOk();
+
+        // Форма без цены
+        $client->submitForm('Сохранить', [
+            'course[code]' => 'course-code',
+            'course[name]' => 'Correct name',
+            'course[description]' => 'Long correct course description',
+            'course[type]' => 'buy',
+            'course[price]' => -1,
+        ]);
+        $this->assertSelectorTextContains(
+            '.invalid-feedback.d-block',
+            'Укажите корректную стоимость'
+        );
+    }
 
     // Проверка создания курса
     public function testCourseCreation(): void
@@ -241,7 +267,9 @@ class CourseTest extends AbstractTest
         $client->submitForm('Сохранить', [
             'course[code]' => 'course-code',
             'course[name]' => 'Correct name',
-            'course[description]' => 'Long correct course description'
+            'course[description]' => 'Long correct course description',
+            'course[price]' => 100,
+            'course[type]' => 'buy'
         ]);
         // Проверка редиректа на страницу курса
         $course = self::getEntityManager()->getRepository(Course::class)->findOneBy(['code' => 'course-code']);
@@ -267,17 +295,20 @@ class CourseTest extends AbstractTest
         $crawler = $client->click($link);
         $this->assertResponseOk();
 
-        // Код урока
+        // Course
         $button = $crawler->selectButton('Редактировать');
         $form = $button->form();
-        $courseId = self::getEntityManager()
+        $course = self::getEntityManager()
             ->getRepository(Course::class)
-            ->findOneBy(['code' => $form['course[code]']->getValue()])->getId();
+            ->findOneBy(['code' => $form['course[code]']->getValue()]);
 
         // Редактирование урока
         $client->submitForm('Редактировать', [
             'course[name]' => 'oldName',
-            'course[description]' => 'oldDescription'
+            'course[description]' => 'oldDescription',
+            'course[code]' => $course->getCode(),
+            'course[price]' => 10,
+            'course[type]' => 'rent'
         ]);
         $crawler = $client->followRedirect();
         $link = $crawler->filter('.app_course_edit')->link();
@@ -285,16 +316,18 @@ class CourseTest extends AbstractTest
         // Повторное редактирование урока
         $client->submitForm('Редактировать', [
             'course[name]' => 'newName',
-            'course[description]' => 'newDescription'
+            'course[description]' => 'newDescription',
+            'course[code]' => $course->getCode(),
+            'course[price]' => 100,
+            'course[type]' => 'buy'
         ]);
         // Проверить редирект
-        $this->assertSame('/courses/' . $courseId, $client->getResponse()->headers->get('location'));
+        $this->assertSame('/courses/' . $course->getId(), $client->getResponse()->headers->get('location'));
         $crawler = $client->followRedirect();
         $this->assertResponseOk();
         // Проверить что имя изменилось
         $this->assertSame('newName', $crawler->filter('h1')->text());
     }
-
     // Проверка удаления
     public function testCourseDelete()
     {
@@ -378,7 +411,7 @@ class CourseTest extends AbstractTest
         $crawler = $client->request('GET', '/profile');
         $link = $crawler->selectLink('история транзакций')->link();
         $crawler = $client->click($link);
-        $this->assertCount(7, $crawler->filter('tr'));
+        $this->assertCount(8, $crawler->filter('tr'));
     }
     // Страница доступного курса
     public function testPurchasedCourse()
